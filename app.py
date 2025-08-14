@@ -1,7 +1,7 @@
 # app.py
 import os, json
 from fastapi import FastAPI, Request, HTTPException, Query
-from compressor import compress_one, compress_all_applicants  # import new function
+from compressor import compress_one, compress_all_applicants, decompress_one, decompress_all  # import new function
 
 AIRTABLE_API = os.environ["AIRTABLE_TOKEN"]
 
@@ -31,3 +31,32 @@ def run_via_get(app_id: str = Query(..., alias="app_id"), rec: str = Query(..., 
 def run_compressor_all():
     result = compress_all_applicants()
     return {"status": "ok", "message": result}
+
+
+app = FastAPI()
+
+
+@app.post("/run_decompressor")
+async def run_decompressor(
+    request: Request, app_id: str | None = Query(None, alias="app_id"), rec: str | None = Query(None, alias="rec")
+):
+    # try JSON body first
+    if request.headers.get("content-type", "").startswith("application/json"):
+        try:
+            body = await request.json()
+            app_id = body.get("app_id", app_id)
+            rec = body.get("rec", rec)
+        except ValueError:
+            pass  # ignore if body isn't JSON
+
+    if not (app_id and rec):
+        raise HTTPException(400, "Need app_id and rec")
+
+    decompress_one(app_id, rec)
+    return {"status": "ok", "rec": rec}
+
+
+@app.post("/run_decompressor_all")
+def run_decompressor_all(dry_run=False):
+    message = decompress_all(dry_run=dry_run)
+    return {"status": "ok", "message": message}

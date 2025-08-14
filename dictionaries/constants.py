@@ -43,3 +43,38 @@ FIELD_NAMES_TO_IDS = {
         "Applicant ID": "fldy0CgoqUy0zShMY",
     },
 }
+
+FIELD_MAP = {
+    "Personal Details": {
+        "json_section": "personal",
+        "id_field": "fldy0CgoqUy0zShMY",  # Applicant ID column ID
+        "columns": {
+            "name": "fldQAuEiw05IwfJbb",
+            "email": "fldLFg3MWjAxoNXxp",
+            "location": "fldbwGfpaxC5KbyFJ",
+            "linkedin": "fldkqoBOtlo26cglB",
+        },
+    },
+    "Salary Preferences": {
+        "json_section": "salary",
+        "id_field": "fldiaw7BpD6Yt5kWn",
+        "columns": {
+            "preferred_rate": "fld78iIAtgk9OqQ6B",
+            "min_rate": "fldN7kEdbRAmaVfUh",
+            "currency": "fldmt0c55Sd9KQsDE",
+            "availability": "fldZK6OMMWkAR6MMC",
+        },
+    },
+    "Work Experience": {
+        "json_section": "experience",
+        "id_field": "fldjAiwBB2zuvWQKI",
+        "columns": {
+            "company": "fldkTYhz6tDod6zeX",
+            "title": "fldQmVBZl4ZOz7nRc",
+            "start": "fld0S2WeNmYa2XXhM",
+            "end": "fldXSlyVJtbaAmi4V",
+            "tech": "fldGQYpn5effVBLHo",
+        },
+        "key_fields": ("company", "title", "start", "end", "tech"),
+    },
+}
