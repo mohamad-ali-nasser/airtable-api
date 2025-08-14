@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: airtable-compressor
+    runtime: python
+    plan: free
+
+    buildCommand: |
+      pip install poetry
+      poetry install --no-dev --no-interaction --no-ansi
+
+    startCommand: |
+      poetry run uvicorn app:app --host 0.0.0.0 --port $PORT
+
+    envVars:
+      - key: AIRTABLE_TOKEN       # mark “sync: false” and set in Render dashboard
+        sync: false
+      - key: BASE_ID
+        value: appXXXXXXXXXXXX
+      - key: TABLE_APPLICANTS_ID
+        value: Applicants
+      - key: TABLE_PERSONAL_ID
+        value: "Personal Details"
+      - key: TABLE_WORK_ID
+        value: "Work Experience"
+      - key: TABLE_SALARY_ID
+        value: "Salary Preferences"
