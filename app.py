@@ -56,6 +56,12 @@ async def run_decompressor(
     return {"status": "ok", "rec": rec}
 
 
+@app.get("/run_decompressor")
+def run_decompressor_via_get(app_id: str = Query(..., alias="app_id"), rec: str = Query(..., alias="rec")):
+    decompress_one(applicant_id=app_id, rec_id=rec)
+    return {"status": "ok", "rec": rec}
+
+
 @app.post("/run_decompressor_all")
 def run_decompressor_all(dry_run=False):
     message = decompress_all(dry_run=dry_run)
