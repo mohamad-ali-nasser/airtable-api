@@ -1,6 +1,6 @@
 # app.py
 import os, json
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Query
 from compressor import compress_one  # your function from earlier
 
 AIRTABLE_API = os.environ["AIRTABLE_TOKEN"]
@@ -19,3 +19,9 @@ async def run(req: Request):
         raise HTTPException(status_code=400, detail="Missing app_id or rec")
     payload = compress_one(applicant_id=applicant_id, rec_id=rec_id)
     return {"status": "ok", "rec": rec_id, "payload": payload}
+
+
+@app.get("/run_compressor")
+def run_via_get(app_id: str = Query(..., alias="app_id"), rec: str = Query(..., alias="rec")):
+    payload = compress_one(applicant_id=app_id, rec_id=rec)
+    return {"status": "ok", "rec": rec, "payload": payload}

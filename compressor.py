@@ -61,3 +61,4 @@ def build_json(applicant_id: str) -> dict:
 def compress_one(applicant_id: str, rec_id: str):
     j = build_json(applicant_id)
     tbl_app.update(rec_id, {"Compressed JSON": json.dumps(j, ensure_ascii=False)})
+    return json.dumps(j, ensure_ascii=False)
