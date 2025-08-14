@@ -14,12 +14,11 @@ def test_run_compressor_missing_fields():
 def test_run_compressor_valid():
     body = {"rec": "reclU63Ifw3jE3oDN", "app_id": "APP-20250812-00001"}
     response = client.post("/run_compressor", json=body, headers={"Content-Type": "application/json"})
-    # The actual result depends on compress_one, so just check status code for now
     assert response.status_code == 200
 
 
 def test_run_via_get_valid():
-    params = {"app_id": "APP-20250812-00001", "rec": "reclU63Ifw3jE3oDN"}
+    params = {"app_id": "APP-20250814-00015", "rec": "recQxgWNvJeiuUrL6"}
     response = client.get("/run_compressor", params=params)
     assert response.status_code == 200
     # Optionally check response.json() for expected keys
