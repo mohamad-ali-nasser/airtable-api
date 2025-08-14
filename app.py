@@ -63,6 +63,6 @@ def run_decompressor_via_get(app_id: str = Query(..., alias="app_id"), rec: str 
 
 
 @app.post("/run_decompressor_all")
-def run_decompressor_all(dry_run=False):
-    message = decompress_all(dry_run=dry_run)
+def run_decompressor_all():
+    message = decompress_all()
     return {"status": "ok", "message": message}
