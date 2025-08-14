@@ -30,7 +30,7 @@ def run_via_get(app_id: str = Query(..., alias="app_id"), rec: str = Query(..., 
     return {"status": "ok", "rec": rec, "payload": payload}
 
 
-@app.post("/run_compressor_all")
+@app.get("/run_compressor_all")
 def run_compressor_all():
     result = compress_all_applicants()
     return {"status": "ok", "message": result}

@@ -116,6 +116,20 @@ def decompress_one(applicant_id: str, rec_id: str, dry_run: bool = False) -> dic
     )
 
 
+def _is_blank(v) -> bool:
+    """True for None, '', whitespace-only, empty list/dict; numbers are NOT blank."""
+    if v is None:
+        return True
+    if isinstance(v, str):
+        return v.strip() == ""
+    if isinstance(v, (list, tuple, set)):
+        # empty or all-blank elements
+        return len(v) == 0 or all(_is_blank(x) for x in v)
+    if isinstance(v, dict):
+        return len(v) == 0 or all(_is_blank(x) for x in v.values())
+    return False  # numbers, booleans, etc. count as non-blank
+
+
 def _upsert_single(tbl, table_key, applicant_id, fields, dry_run=False):
     # Find row by Applicant ID
     try:
@@ -135,8 +149,12 @@ def _upsert_single(tbl, table_key, applicant_id, fields, dry_run=False):
             if not dry_run:
                 tbl.update(records[0]["id"], upsert_fields, typecast=True)
         else:
+            all_empty = all(_is_blank(fields.get(jk, "")) for jk in col_ids.keys())
+            if all_empty:
+                return {"skipped": True, "reason": "all_values_empty"}
+            create_payload = {id_field: applicant_id, **upsert_fields}
             if not dry_run:
-                tbl.create(upsert_fields, typecast=True)
+                tbl.create(create_payload, typecast=True)
     except Exception as e:
         raise RuntimeError(f"Upsert failed for {table_key} ({applicant_id}): {e}")
 

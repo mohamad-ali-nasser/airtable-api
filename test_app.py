@@ -26,11 +26,11 @@ def test_run_via_get_valid():
 
 
 def test_run_decompressor():
-    response = client.post("/run_decompressor", json={"app_id": "APP-20250814-00015", "rec": "recQxgWNvJeiuUrL6"})
+    response = client.post("/run_decompressor", json={"app_id": "APP-20250814-00014", "rec": "recyJj4wsQqqToUUp"})
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "ok"
-    assert data["rec"] == "recQxgWNvJeiuUrL6"
+    assert data["rec"] == "recyJj4wsQqqToUUp"
 
 
 def test_run_via_get_decompressor():
