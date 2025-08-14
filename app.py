@@ -1,11 +1,14 @@
-# app.py
-import os, json
+import os, json, asyncio
 from fastapi import FastAPI, Request, HTTPException, Query
-from compressor import compress_one, compress_all_applicants, decompress_one, decompress_all  # import new function
-
-AIRTABLE_API = os.environ["AIRTABLE_TOKEN"]
+from compressor import compress_one, compress_all_applicants, decompress_one, decompress_all
 
 app = FastAPI()
+locks: dict[str, asyncio.Lock] = {}  # ← NEW global lock-registry
+
+
+# ───────── helper: one lock object per applicant ─────────
+def _get_lock(app_id: str) -> asyncio.Lock:
+    return locks.setdefault(app_id, asyncio.Lock())
 
 
 @app.post("/run_compressor")
@@ -33,36 +36,42 @@ def run_compressor_all():
     return {"status": "ok", "message": result}
 
 
-app = FastAPI()
-
-
 @app.post("/run_decompressor")
 async def run_decompressor(
     request: Request, app_id: str | None = Query(None, alias="app_id"), rec: str | None = Query(None, alias="rec")
 ):
-    # try JSON body first
+    # also accept JSON body
     if request.headers.get("content-type", "").startswith("application/json"):
         try:
             body = await request.json()
             app_id = body.get("app_id", app_id)
             rec = body.get("rec", rec)
         except ValueError:
-            pass  # ignore if body isn't JSON
+            pass
 
     if not (app_id and rec):
         raise HTTPException(400, "Need app_id and rec")
 
-    decompress_one(app_id, rec)
+    lock = _get_lock(app_id)
+    async with lock:  # ← SERIALISE per applicant
+        decompress_one(app_id, rec)
     return {"status": "ok", "rec": rec}
 
 
+all_lock = asyncio.Lock()
+
+
 @app.get("/run_decompressor")
-def run_decompressor_via_get(app_id: str = Query(..., alias="app_id"), rec: str = Query(..., alias="rec")):
-    decompress_one(applicant_id=app_id, rec_id=rec)
+async def run_decompressor_via_get(app_id: str = Query(..., alias="app_id"), rec: str = Query(..., alias="rec")):
+    lock = _get_lock(app_id)
+    async with lock:
+        decompress_one(app_id, rec)
     return {"status": "ok", "rec": rec}
 
 
 @app.post("/run_decompressor_all")
-def run_decompressor_all():
-    message = decompress_all()
-    return {"status": "ok", "message": message}
+async def run_decompressor_all():
+    async with all_lock:  # ← only ONE runs at a time
+        msg = await asyncio.to_thread(decompress_all)
+        # to_thread() runs blocking code without blocking the event loop
+    return {"status": "ok", "message": msg}
