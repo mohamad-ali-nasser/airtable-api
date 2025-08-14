@@ -20,15 +20,15 @@ tbl_sal = api.table(BASE, T_SAL_ID)
 
 def build_json(applicant_id: str) -> dict:
     # 1. fetch linked Personal Details (should be 1)
-    pd = tbl_pers.all(formula=f"{{Applicant}}='{applicant_id}'")
+    pd = tbl_pers.all(formula=f"{{Applicant ID}}='{applicant_id}'")
     personal = pd[0]["fields"] if pd else {}
 
     # 2. fetch Work Experience rows (many)
-    we = tbl_work.all(formula=f"{{Applicant}}='{applicant_id}'")
+    we = tbl_work.all(formula=f"{{Applicant ID}}='{applicant_id}'")
     work = [r["fields"] for r in we]
 
     # 3. fetch Salary Preferences (should be 1)
-    sp = tbl_sal.all(formula=f"{{Applicant}}='{applicant_id}'")
+    sp = tbl_sal.all(formula=f"{{Applicant ID}}='{applicant_id}'")
     salary = sp[0]["fields"] if sp else {}
 
     # 4. assemble
