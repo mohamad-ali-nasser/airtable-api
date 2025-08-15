@@ -16,6 +16,7 @@ python-dotenv = ">=1.1.1,<2.0.0"
 uvicorn = "^0.35.0"
 pytest = "^8.4.1"
 httpx = "^0.28.1"
+openai = "^1.99.9"
 
 
 [build-system]

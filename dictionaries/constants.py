@@ -25,6 +25,7 @@ FIELD_NAMES_TO_IDS = {
         "SalaryFilled": "flddBLoguuqTRAg3l",
         "AI assist": "fldG6XK4RULiHwmH5",
         "record_id": "fld0UCrgQUqlYNHmA",
+        "Last Modified Date of Compressed JSON": "fldQcHlhMZoa0vx97"
     },
     "Salary Preferences": {
         "Preferred Rate": "fld78iIAtgk9OqQ6B",
@@ -48,7 +49,7 @@ FIELD_NAMES_TO_IDS = {
         "Applicant ID": "fldj9BtgZqztlyf9i",
         "Compressed JSON": "fldz3edoeYxUoFVYW",
         "Score Reason": "fldp1lgcJjKh49Hwp",
-        "Created At": "fldLStG9m1QclnFkF",
+        "Created / Modified At": "fldLStG9m1QclnFkF",
     },
 }
 

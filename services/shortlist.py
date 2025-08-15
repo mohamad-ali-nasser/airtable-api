@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 from dictionaries.constants import FIELD_NAMES_TO_IDS, SHORTLIST_RULES, BASE_ID, TABLE_APPLICANTS_ID, TABLE_SHORTLIST_ID
 from datetime import datetime
+from services.llm_evaluator import llm_evaluate_applicant
 
 load_dotenv()
 API = os.getenv("AIRTABLE_TOKEN")
@@ -133,6 +134,41 @@ def _update_applicant_status(applicant_id: str, status: str):
         tbl_app.update(rows[0]["id"], {AP["Shortlist Status"]: status}, typecast=True)
 
 
+def _apply_llm_outputs_to_records(app_rec: dict, shortlist_rec_id: str, applicant_json: dict):
+    """
+    Run LLM and write results:
+      Applicants: LLM Summary, LLM Score, LLM Follow-Ups
+      Shortlisted Leads: Score Reason (from issues)
+    """
+    AP = FIELD_NAMES_TO_IDS["Applicants"]
+    SL = FIELD_NAMES_TO_IDS["Shortlisted Leads"]
+
+    try:
+        llm = llm_evaluate_applicant(applicant_json)
+    except Exception as e:
+        # Don't block shortlist writes if LLM fails
+        return {"llm_status": "error", "llm_message": f"LLM error: {e}"}
+
+    # Update Applicants row
+    app_update = {
+        AP["LLM Summary"]: llm.get("summary", ""),
+        AP["LLM Score"]: llm.get("score", 0),
+        AP["LLM Follow-Ups"]: llm.get("follow_ups", ""),
+    }
+    try:
+        tbl_app.update(app_rec["id"], app_update, typecast=True)
+    except Exception as e:
+        return {"llm_status": "partial", "llm_message": f"Applicants update failed: {e}"}
+
+    # Update Shortlisted Leads row (Score Reason from issues)
+    try:
+        tbl_shortlist.update(shortlist_rec_id, {SL["Score Reason"]: llm.get("issues", "None")}, typecast=True)
+    except Exception as e:
+        return {"llm_status": "partial", "llm_message": f"Shortlist update failed: {e}"}
+
+    return {"llm_status": "ok"}
+
+
 def generate_shortlist_one(applicant_id: str, rec_id: str | None = None, compressed_json: str | None = None) -> dict:
     if not applicant_id or not str(applicant_id).strip():
         return {"status": "error", "message": "applicant_id is required"}
@@ -145,6 +181,20 @@ def generate_shortlist_one(applicant_id: str, rec_id: str | None = None, compres
             compressed_json = app_rec.get("fields", {}).get("Compressed JSON")
             if not compressed_json:
                 return {"status": "error", "message": f"No Compressed JSON for applicant {applicant_id}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Error fetching Applicants record: {e}"}
+    else:
+        # If compressed_json was passed, we still need the app_rec
+        try:
+            app_rec = tbl_app.get(rec_id) if rec_id else None
+            if app_rec is None:
+                # find by Applicant ID
+                AP = FIELD_NAMES_TO_IDS["Applicants"]
+                formula = f"{{{AP['Applicant ID']}}}='{applicant_id}'"
+                rows = tbl_app.all(formula=formula, max_records=1)
+                if not rows:
+                    return {"status": "error", "message": f"Applicant {applicant_id} not found"}
+                app_rec = rows[0]
         except Exception as e:
             return {"status": "error", "message": f"Error fetching Applicants record: {e}"}
 
@@ -162,14 +212,18 @@ def generate_shortlist_one(applicant_id: str, rec_id: str | None = None, compres
             current_cjson = existing.get("fields", {}).get(SL["Compressed JSON"])
             if current_cjson != compressed_json:
                 tbl_shortlist.update(existing["id"], {SL["Compressed JSON"]: compressed_json}, typecast=True)
+                # LLM on update
+                llm_info = _apply_llm_outputs_to_records(app_rec, existing["id"], data)
                 return {"status": "Shortlisted", "message": f"Shortlist updated for {applicant_id}"}
             else:
                 return {"status": "Shortlisted", "message": f"Shortlist already up-to-date for {applicant_id}"}
         else:
-            tbl_shortlist.create(
+            created = tbl_shortlist.create(
                 {SL["Applicant ID"]: applicant_id, SL["Compressed JSON"]: compressed_json},
                 typecast=True,
             )
+            # LLM on create
+            llm_info = _apply_llm_outputs_to_records(app_rec, created["id"], data)
             return {"status": "Shortlisted", "message": f"Shortlist created for {applicant_id}"}
     else:
         _update_applicant_status(applicant_id, "Not Shortlisted")
@@ -183,16 +237,14 @@ def generate_shortlist_one(applicant_id: str, rec_id: str | None = None, compres
 def generate_shortlist():
     SL = FIELD_NAMES_TO_IDS["Shortlisted Leads"]
     created = updated = deleted = skipped = 0
+    llm_ok = llm_errors = 0
 
     for app_rec in tbl_app.all():
         fields = app_rec.get("fields", {})
         app_id = fields.get("Applicant ID")
         cjson = fields.get("Compressed JSON")
 
-        if not app_id or not str(app_id).strip():
-            skipped += 1
-            continue
-        if not cjson:
+        if not app_id or not str(app_id).strip() or not cjson:
             skipped += 1
             continue
 
@@ -210,11 +262,21 @@ def generate_shortlist():
                 if existing.get("fields", {}).get(SL["Compressed JSON"]) != cjson:
                     tbl_shortlist.update(existing["id"], {SL["Compressed JSON"]: cjson}, typecast=True)
                     updated += 1
+                    # LLM on update
+                    llm_info = _apply_llm_outputs_to_records(app_rec, existing["id"], data)
+                    llm_ok += 1 if llm_info.get("llm_status") == "ok" else 0
+                    llm_errors += 1 if llm_info.get("llm_status") != "ok" else 0
                 else:
                     skipped += 1
             else:
-                tbl_shortlist.create({SL["Applicant ID"]: app_id, SL["Compressed JSON"]: cjson}, typecast=True)
+                created_row = tbl_shortlist.create(
+                    {SL["Applicant ID"]: app_id, SL["Compressed JSON"]: cjson}, typecast=True
+                )
                 created += 1
+                # LLM on create
+                llm_info = _apply_llm_outputs_to_records(app_rec, created_row["id"], data)
+                llm_ok += 1 if llm_info.get("llm_status") == "ok" else 0
+                llm_errors += 1 if llm_info.get("llm_status") != "ok" else 0
         else:
             _update_applicant_status(app_id, "Not Shortlisted")
             if existing:
@@ -223,4 +285,14 @@ def generate_shortlist():
             else:
                 skipped += 1
 
-    return {"status": "ok", "message": {"created": created, "updated": updated, "deleted": deleted, "skipped": skipped}}
+    return {
+        "status": "ok",
+        "message": {
+            "created": created,
+            "updated": updated,
+            "deleted": deleted,
+            "skipped": skipped,
+            "llm_ok": llm_ok,
+            "llm_errors": llm_errors,
+        },
+    }
