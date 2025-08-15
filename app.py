@@ -1,6 +1,8 @@
 import os, json, asyncio
 from fastapi import FastAPI, Request, HTTPException, Query
-from compressor import compress_one, compress_all_applicants, decompress_one, decompress_all
+from services.compressor import compress_one, compress_all_applicants
+from services.decompression import decompress_one, decompress_all
+from services.shortlist import generate_shortlist_one, generate_shortlist
 
 app = FastAPI()
 locks: dict[str, asyncio.Lock] = {}  # ← NEW global lock-registry
@@ -20,20 +22,34 @@ async def run(req: Request):
         rec_id = body["rec"]  # e.g. "recA1B2C3D4E5"
     except KeyError:
         raise HTTPException(status_code=400, detail="Missing app_id or rec")
+
     payload = compress_one(applicant_id=applicant_id, rec_id=rec_id)
-    return {"status": "ok", "rec": rec_id, "payload": payload}
+
+    # Run shortlisting on this applicant
+    shortlist_result = generate_shortlist_one(applicant_id=applicant_id, rec_id=rec_id)
+
+    return {"status": "ok", "rec": rec_id, "payload": payload, "shortlist_status": shortlist_result["status"]}
 
 
 @app.get("/run_compressor")
 def run_via_get(app_id: str = Query(..., alias="app_id"), rec: str = Query(..., alias="rec")):
     payload = compress_one(applicant_id=app_id, rec_id=rec)
-    return {"status": "ok", "rec": rec, "payload": payload}
+
+    # Run shortlisting on this applicant
+    shortlist_result = generate_shortlist_one(applicant_id=app_id, rec_id=rec)
+
+    return {"status": "ok", "rec": rec, "payload": payload, "shortlist_status": shortlist_result["status"]}
 
 
 @app.get("/run_compressor_all")
 def run_compressor_all():
-    result = compress_all_applicants()
-    return {"status": "ok", "message": result}
+    # Compress all applicants
+    compress_result = compress_all_applicants()
+
+    # Run shortlisting on all applicants
+    shortlist_result = generate_shortlist()
+
+    return {"status": "ok", "compression": compress_result, "shortlist_status": shortlist_result["message"]}
 
 
 @app.post("/run_decompressor")
@@ -75,3 +91,15 @@ async def run_decompressor_all():
         msg = await asyncio.to_thread(decompress_all)
         # to_thread() runs blocking code without blocking the event loop
     return {"status": "ok", "message": msg}
+
+
+@app.get("/run_shortlist")
+def run_shortlist_single(app_id: str = Query(..., alias="app_id"), rec: str = Query(..., alias="rec")):
+    shortlist_result = generate_shortlist_one(applicant_id=app_id, rec_id=rec)
+    return {"status": "ok", "shortlist_status": shortlist_result["status"]}
+
+
+@app.get("/run_shortlist_all")
+def run_shortlist_all():
+    shortlist_result = generate_shortlist()
+    return {"status": "ok", "shortlist_status": shortlist_result["message"]}

@@ -18,11 +18,16 @@ def test_run_compressor_valid():
     assert response.status_code == 200
 
 
-def test_run_via_get_valid():
+def test_run_compressor_via_get_valid():
     params = {"app_id": "APP-20250814-00015", "rec": "recQxgWNvJeiuUrL6"}
     response = client.get("/run_compressor", params=params)
     assert response.status_code == 200
     # Optionally check response.json() for expected keys
+
+
+def test_run_compressor_via_get_all():
+    response = client.get("/run_compressor_all")
+    assert response.status_code == 200
 
 
 def test_run_decompressor():
@@ -33,7 +38,7 @@ def test_run_decompressor():
     assert data["rec"] == "recyJj4wsQqqToUUp"
 
 
-def test_run_via_get_decompressor():
+def test_run_decompressor_via_get():
     response = client.get("/run_decompressor", params={"app_id": "APP-20250814-00015", "rec": "recQxgWNvJeiuUrL6"})
     assert response.status_code == 200
     data = response.json()

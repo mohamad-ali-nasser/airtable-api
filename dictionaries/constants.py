@@ -10,6 +10,7 @@ FIELD_NAMES_TO_IDS = {
         "Applicant ID": "fldjAiwBB2zuvWQKI",
     },
     "Applicants": {
+        "Applicant ID": "fldjwaZP4So4Fs45S",
         "Compressed JSON": "fldDyJ6jT54YE99bs",
         "Shortlist Status": "fldrIxLofvTyqLcfX",
         "LLM Summary": "fld8vUBWqkmQZV1f6",
@@ -41,6 +42,13 @@ FIELD_NAMES_TO_IDS = {
         "Created": "fldgyTaWrdXN0l4gY",
         "auto_number (personal_details)": "fld0ZBeASiQSJOu9h",
         "Applicant ID": "fldy0CgoqUy0zShMY",
+    },
+    "Shortlisted Leads": {
+        "Name": "fldCYzJzOCHkaTLcE",
+        "Applicant ID": "fldj9BtgZqztlyf9i",
+        "Compressed JSON": "fldz3edoeYxUoFVYW",
+        "Score Reason": "fldp1lgcJjKh49Hwp",
+        "Created At": "fldLStG9m1QclnFkF",
     },
 }
 
@@ -78,3 +86,27 @@ FIELD_MAP = {
         "key_fields": ("company", "title", "start", "end", "tech"),
     },
 }
+
+
+SHORTLIST_RULES = {
+    "experience": {
+        "min_years": 4,
+        "tier_1_companies": {"Google", "Meta", "OpenAI", "Microsoft", "Amazon", "Apple", "Netflix"},
+    },
+    "salary": {
+        "max_rate": 100,
+        "min_availability": 20,
+    },
+    "location": {
+        "allowed_countries": {"US", "Canada", "UK", "Germany", "India"},
+    },
+}
+
+
+# Airtable Base and Table IDs
+BASE_ID = "appOHlOIzpbA8EYI3"
+TABLE_APPLICANTS_ID = "tblWdUw8VbNZqHvU5"
+TABLE_PERSONAL_ID = "tblkdXd9d3ayZNE3F"
+TABLE_WORK_ID = "tblVt8RsY8VPu0TeZ"
+TABLE_SALARY_ID = "tbl2iibUtYjupxyfk"
+TABLE_SHORTLIST_ID = "tblmATJnlO5LGqsMr"
