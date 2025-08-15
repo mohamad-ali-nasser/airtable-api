@@ -2,6 +2,8 @@ from openai import OpenAI
 import os
 import json
 from dotenv import load_dotenv
+import time
+import random
 
 load_dotenv()
 
@@ -15,6 +17,7 @@ def llm_evaluate_applicant(applicant_json):
     prompt = f"""
     You are a recruiting analyst.
     Applicants have already been shortlisted based on their location, preferred rate, availability, and experience (or tier 1 company).
+    Visa/relocations requirements are not specified do not evaluate based on them.
 
     Applicant JSON:
     {json_str}
@@ -26,7 +29,7 @@ def llm_evaluate_applicant(applicant_json):
     Given this JSON applicant profile, do four things:
     1. Provide a concise 75-word summary.
     2. Rate overall candidate quality from 1-10 (higher is better).
-    3. List any data gaps or inconsistencies you notice.
+    3. List any data gaps or inconsistencies you notice, 20 to 40 words.
     4. Suggest up to three follow-up questions to clarify gaps.
 
     Return exactly a json:
@@ -38,14 +41,20 @@ def llm_evaluate_applicant(applicant_json):
     }}
     """
 
-    response = client.responses.create(model="gpt-5-nano", input=prompt)
+    max_retries = 3
+    backoff_base = 2  # exponential base
 
-    text_output = response.output_text.strip()
-
-    try:
-        data = json.loads(text_output)
-    except json.JSONDecodeError:
-        raise ValueError(f"LLM did not return valid JSON: {text_output}")
+    for attempt in range(max_retries):
+        try:
+            response = client.responses.create(model="gpt-5-nano", input=prompt)
+            text_output = response.output_text.strip()
+            data = json.loads(text_output)
+            break  # success
+        except Exception as e:
+            if attempt == max_retries - 1:
+                raise  # raise final failure
+            sleep_time = (backoff_base**attempt) + random.uniform(0, 1)
+            time.sleep(sleep_time)
 
     # Minimal sanity checks / normalization
     data["summary"] = str(data.get("summary", "")).strip()

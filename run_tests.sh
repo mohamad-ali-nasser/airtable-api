@@ -1,0 +1,3 @@
+#!/bin/bash
+echo "Running tests for Airtable API..."
+poetry run pytest -v

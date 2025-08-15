@@ -147,7 +147,7 @@ def _apply_llm_outputs_to_records(app_rec: dict, shortlist_rec_id: str, applican
         llm = llm_evaluate_applicant(applicant_json)
     except Exception as e:
         # Don't block shortlist writes if LLM fails
-        return {"llm_status": "error", "llm_message": f"LLM error: {e}"}
+        llm = {"summary": "Error", "score": 0, "issues": "Error", "follow_ups": "Error"}
 
     # Update Applicants row
     app_update = {
@@ -166,6 +166,8 @@ def _apply_llm_outputs_to_records(app_rec: dict, shortlist_rec_id: str, applican
     except Exception as e:
         return {"llm_status": "partial", "llm_message": f"Shortlist update failed: {e}"}
 
+    if llm.get("summary") == "Error":
+        return {"llm_status": "error", "llm_message": "LLM error"}
     return {"llm_status": "ok"}
 
 
