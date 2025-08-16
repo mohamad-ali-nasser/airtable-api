@@ -25,7 +25,7 @@
 ## Operational Run-book
 
 1) Candidate submits three forms with the same **Applicant ID**.  
-2) Click **Run Compression** (or call `/run_compressor_all`).  
+2) Click **Run Compression** via Field Agent per row, (or call `/run_compressor_all` via button in the Airtable Interface, or by simply calling the API).  
 3) **Shortlist** runs. If **Shortlisted** and JSON is **new/changed**, **LLM** runs and writes to **Applicants** + **Shortlisted Leads**.  
 4) If a candidate becomes **Not Shortlisted**, any **existing shortlist row is deleted**.  
 5) (Optional) **Run Decompression** to mirror JSON into child tables, Applicants, Personal Details, Salary Preferences records are updated, Work Experience records are deleted and created anew.
