@@ -1,4 +1,4 @@
-# Mercor Mini-Interview – Implementation Guide
+# Mercor Assessment – Documentation/Implementation Guide
 
 **Author:** Mohamad Ali Nasser  
 **Repo:** `mohamad-ali-nasser/airtable-api`  
@@ -158,7 +158,7 @@ _sync_work_experience(tbl=tbl_work, applicant_id=applicant_id, experiences=data.
 
 ---
 
-## 3) LLM Integration — Configuration, Security & **Field Updates**
+## 3) LLM Integration - Configuration, Security & **Field Updates**
 
 **Trigger timing**  
 - Only when a shortlist row is **created** or the applicant’s `Compressed JSON` is **changed**. This keeps costs low and makes results cache-friendly.
@@ -193,7 +193,7 @@ tbl_shortlist.update(shortlist_rec_id, {SL["Score Reason"]: llm.get("issues", "N
 
 ---
 
-## 4) Shortlist Criteria — How to Extend/Customize
+## 4) Shortlist Criteria - How to Extend/Customize
 
 - **Rules live in** `SHORTLIST_RULES` (experience / rate & availability / allowed countries) in `dictionaries/constants.py`.
 - **Application logic** lives in `meets_criteria(...)` (and helpers like `calculate_experience_years(...)`, `worked_at_tier1(...)`) in `services/shortlist.py`.
@@ -221,7 +221,7 @@ Common extensions:
 
 ---
 
-## Appendix — API Endpoint Cheat-Sheet (incl. GET with parameters)
+## Appendix - API Endpoint Cheat-Sheet (incl. GET with parameters)
 
 **Compression (single):**  
 - `POST /run_compressor` (body: `{"app_id":"APP-...","rec":"rec..."}`)  
