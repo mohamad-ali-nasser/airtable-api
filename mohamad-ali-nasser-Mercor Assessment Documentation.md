@@ -1,7 +1,7 @@
 # Mercor Assessment – Documentation/Implementation Guide
 
 **Author:** Mohamad Ali Nasser  
-**Repo:** `mohamad-ali-nasser/airtable-api`  
+**Repo:** `https://github.com/mohamad-ali-nasser/airtable-api/`  
 **Public API (Render):** `https://airtable-api-1w4v.onrender.com/`
 
 > ## Caveats (Airtable Free tier / trial), Hosting and feautres
@@ -215,9 +215,8 @@ Common extensions:
 
 ## 6) Links
 
-- **GitHub:** `mohamad-ali-nasser/airtable-api`  
+- **GitHub:** `https://github.com/mohamad-ali-nasser/airtable-api/`  
 - **Render API:** `https://airtable-api-1w4v.onrender.com/`  
-- **Airtable invite:** (add your link)
 
 ---
 

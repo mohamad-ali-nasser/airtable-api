@@ -13,6 +13,15 @@ def _get_lock(app_id: str) -> asyncio.Lock:
     return locks.setdefault(app_id, asyncio.Lock())
 
 
+app = FastAPI(
+    title="Airtable API",
+    version="1.0.0",
+    docs_url="/",  # Swagger UI at root
+    redoc_url="/redoc",  # (optional) keep ReDoc at /redoc
+    openapi_url="/openapi.json",
+)
+
+
 @app.post("/run_compressor")
 async def run(req: Request):
     body = await req.json()
