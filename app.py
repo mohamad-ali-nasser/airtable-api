@@ -3,8 +3,8 @@ from fastapi import FastAPI, Request, HTTPException, Query
 from services.compressor import compress_one, compress_all_applicants
 from services.decompression import decompress_one, decompress_all
 from services.shortlist import generate_shortlist_one, generate_shortlist
+import time
 
-app = FastAPI()
 locks: dict[str, asyncio.Lock] = {}  # ← NEW global lock-registry
 
 
@@ -20,6 +20,19 @@ app = FastAPI(
     redoc_url="/redoc",  # (optional) keep ReDoc at /redoc
     openapi_url="/openapi.json",
 )
+
+
+@app.middleware("http")
+async def audit(request: Request, call_next):
+    try:
+        ua = request.headers.get("user-agent", "-")
+        xff = request.headers.get("x-forwarded-for", request.client.host)
+        print(f"{time.strftime('%H:%M:%S')} {request.method} {request.url.path} ip={xff} ua={ua}")
+    except Exception as e:
+        # never let logging failure block the request
+        print(f"[audit-mw] log error: {e}")
+    response = await call_next(request)
+    return response
 
 
 @app.post("/run_compressor")
